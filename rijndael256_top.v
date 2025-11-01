@@ -6,14 +6,15 @@ module rijndael256_top(
                         input wire         rst_n,
                         input wire         start,
                         input wire [255:0] plaintext,
+                        input wire         key_mode,                       
                         input wire [255:0] key,
                         output reg [255:0] ciphertext,
                         output reg         busy,
                         output reg         done
                        );
 
-   localparam Ncolumns = 8;  // 8 columns for 256-bit block
-   localparam Nrounds = 14;  // 14 rounds for 256/256
+   localparam Ncolumns = 8;  // 8 columns for 256bit block
+   localparam Nrounds = 14;
 
    // States
    localparam IDLE         = 3'd0;
@@ -34,10 +35,12 @@ module rijndael256_top(
 
    wire [3839:0] expanded_keys_flat; // 32 * 120 = 3840 bits
 
-   key_expansion256 keyexp_inst (
-                                 .key_in(key),
-                                 .round_keys_flat(expanded_keys_flat)
-                                 );
+   key_expansion_dual keyexp_inst (
+                                   .key_mode(key_mode),
+                                   .key_in(key),
+                                   .round_keys_flat(expanded_keys_flat)
+                                   );
+   
    wire [31:0]   expanded_keys_words[0:119];
 
    genvar j;
@@ -148,7 +151,6 @@ module rijndael256_top(
       end
    endfunction
 
-   // Subbytes transformation
    task automatic do_subbytes;
       begin
          for (i = 0; i < 32; i = i + 1)
@@ -182,7 +184,6 @@ module rijndael256_top(
       end
    endtask
 
-   // Mixcolumns transformation
    task automatic do_mixcolumns;
       reg [7:0] s0, s1, s2, s3;
       begin
@@ -197,7 +198,6 @@ module rijndael256_top(
       end
    endtask
 
-   // Addroundkey transformation
    task automatic do_addroundkey;
       input integer round_num;
       begin
