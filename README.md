@@ -1,5 +1,12 @@
 # Rijndael256Verilog
 
+Simple 32 bit block size Rjindael implementation in verilog.
+
+Currently only encryption, ECB mode and 256 bit keys.
+
+WORK IN PROGRESS
+
+To verify simulation results, compare with py3rijndael library: 
 
 # Rijndael 256-bit Block Test Vector Generator
 
