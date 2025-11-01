@@ -40,7 +40,15 @@ module rijndael256_top(
                                    .key_in(key),
                                    .round_keys_flat(expanded_keys_flat)
                                    );
-   
+   shiftrows sr_inst (
+                      .state_in(state),
+                      .state_out(state_next)
+                      );
+
+   inv_shiftrows isr_inst (
+                           .state_in(state),
+                           .state_out(state_next)
+                           );
    wire [31:0]   expanded_keys_words[0:119];
 
    genvar j;
@@ -248,32 +256,6 @@ module rijndael256_top(
       end
    endtask
 
-   // Shiftrows transformation for 256-bit block (4 rows x 8 columns)
-   task automatic do_shiftrows;
-      begin
-         // row 0: no shift
-         state_next[0]  = state[0];  state_next[4]  = state[4];
-         state_next[8]  = state[8];  state_next[12] = state[12];
-         state_next[16] = state[16]; state_next[20] = state[20];
-         state_next[24] = state[24]; state_next[28] = state[28];
-         // row 1: shift left by 1
-         state_next[1]  = state[5];  state_next[5]  = state[9];
-         state_next[9]  = state[13]; state_next[13] = state[17];
-         state_next[17] = state[21]; state_next[21] = state[25];
-         state_next[25] = state[29]; state_next[29] = state[1];
-         // row 2: shift left by 3
-         state_next[2]  = state[14]; state_next[6]  = state[18];
-         state_next[10] = state[22]; state_next[14] = state[26];
-         state_next[18] = state[30]; state_next[22] = state[2];
-         state_next[26] = state[6];  state_next[30] = state[10];
-         // row 3: shift left by 4
-         state_next[3]  = state[19]; state_next[7]  = state[23];
-         state_next[11] = state[27]; state_next[15] = state[31];
-         state_next[19] = state[3];  state_next[23] = state[7];
-         state_next[27] = state[11]; state_next[31] = state[15];
-      end
-   endtask
-
    task automatic do_mixcolumns;
       reg [7:0] s0, s1, s2, s3;
       begin
@@ -341,9 +323,6 @@ module rijndael256_top(
            end
 
            SHIFT_ROWS: begin
-              do_shiftrows();
-              for (i = 0; i < 32; i = i + 1)
-                 state[i] <= state_next[i];
               state_fsm <= (round == Nrounds) ? ADD_ROUNDKEY : MIX_COLS;
            end
 
