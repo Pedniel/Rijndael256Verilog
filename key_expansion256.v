@@ -1,43 +1,38 @@
 module key_expansion256(
-                         input [255:0] key_in,
-                         output [31:0] round_keys[0:119]
+                        input [255:0]   key_in,
+                        output [3839:0] round_keys_flat // 32 * 120 = 3840 bits
                         );
-   integer i;
 
-   reg [31:0] word [0:119];
-   reg [31:0] temp;
+   reg [31:0]                           word [0:119];
+   reg [31:0]                           temp;
+   integer                              i;
 
-   function [31:0] Rcon;
-      input integer i;
-      reg [7:0]     rc;
-      begin
-         rc = 8'h01;
-         if (i == 0)
-           Rcon = 32'h00000000;
-         else begin
-            integer j;
-            for (j = 1; j < i; j = j + 1)
-              rc = xtime(rc);
-            Rcon = {rc, 24'h0};
+   always @(*) begin
+      for (i = 0; i < 8; i = i + 1) begin
+         word[i] = key_in[255 - i*32 -: 32];
+      end
+      
+      for (i = 8; i < 120; i = i + 1) begin
+         temp = word[i-1];
+         
+         if (i % 8 == 0) begin
+            temp = SubWord(RotWord(temp)) ^ Rcon(i/8);
          end
+         else if (i % 8 == 4) begin
+            temp = SubWord(temp);
+         end
+         
+         word[i] = word[i-8] ^ temp;
       end
-   endfunction
-
-   // rotate a 32-bit word left by 1 byte
-   function [31:0] RotWord;
-      input [31:0] word;
-      begin
-         RotWord = {word[23:0], word[31:24]};
+   end 
+   
+   // Flatten
+   genvar                               j;
+   generate
+      for (j = 0; j < 120; j = j + 1) begin : flatten
+         assign round_keys_flat[32*j +: 32] = word[j];
       end
-   endfunction
-
-   // Apply S-box
-   function [31:0] SubWord;
-      input [31:0] word;
-      begin
-         SubWord = { sbox(word[31:24]), sbox(word[23:16]), sbox(word[15:8]), sbox(word[7:0]) };
-      end
-   endfunction
+   endgenerate
 
    function [7:0] xtime;
       input [7:0] b;
@@ -46,26 +41,37 @@ module key_expansion256(
       end
    endfunction
 
-   always @* begin
-      for (i = 0; i < 8; i = i + 1)
-        word[i] = key_in[255 - 32*i -: 32];
-
-      for (i = 8; i < 120; i = i + 1) begin
-         temp = word[i-1];
-         if (i % 8 == 0)
-           temp = SubWord(RotWord(temp)) ^ Rcon(i/8);
-         else if (i % 8 == 4)
-           temp = SubWord(temp);
-         word[i] = word[i-8] ^ temp;
+   function [31:0] Rcon;
+      input integer i;
+      integer       j;
+      reg [7:0]     rc;
+      begin
+         rc = 8'h01;
+         if (i == 0)
+           Rcon = 32'h00000000;
+         else begin
+            for (j = 1; j < i; j = j + 1)
+              rc = xtime(rc);
+            Rcon = {rc, 24'h0};
+         end
       end
-   end
+   endfunction
 
-   generate
-      genvar j;
-      for (j = 0; j < 120; j = j + 1) begin : assign_words
-         assign round_keys[j] = word[j];
+   // Rotate a 32bit word left by 1 byte
+   function [31:0] RotWord;
+      input [31:0] w;
+      begin
+         RotWord = {w[23:0], w[31:24]};
       end
-   endgenerate
+   endfunction
+
+   // pply sbox to a 32bit word
+   function [31:0] SubWord;
+      input [31:0] w;
+      begin
+         SubWord = { sbox(w[31:24]), sbox(w[23:16]), sbox(w[15:8]), sbox(w[7:0]) };
+      end
+   endfunction
 
    // Code duplication, but I am a lazy man.
    function [7:0] sbox;
