@@ -25,14 +25,17 @@ module rijndael256_ctr(
         .clk(clk),
         .rst_n(rst_n),
         .start(ecb_start),
-        .plaintext(counter),
+        .enc_dec(1'b0),
+        .data_in(counter),
         .key_mode(key_mode),
         .key({64'b0, key}),  // Can pad 192bit key to 256bit key
-        .ciphertext(keystream),
+        .data_out(keystream),
         .busy(ecb_busy),
         .done(ecb_done)
     );
-    
+   
+    `timescale 1ns/1ps
+
     localparam IDLE = 2'd0;
     localparam ENCRYPT_CTR = 2'd1;
     localparam XOR_OUTPUT = 2'd2;
