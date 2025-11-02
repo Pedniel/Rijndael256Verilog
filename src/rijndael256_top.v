@@ -87,6 +87,7 @@ module rijndael256_top(
       endcase
    end
 
+/* -----\/----- EXCLUDED -----\/-----
    // output selection for decryption
    always @(*) begin
       case (state_fsm)
@@ -98,6 +99,7 @@ module rijndael256_top(
          default:      for (i = 0; i < 32; i = i + 1) state_next[i] = state[i];
       endcase
    end
+ -----/\----- EXCLUDED -----/\----- */
 
    // FSM
    always @(posedge clk or negedge rst_n) begin
