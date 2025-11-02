@@ -49,3 +49,9 @@ module shiftrows256 (
    endgenerate
 endmodule
 
+/* -----\/----- EXCLUDED -----\/-----
+| s0   s4   s8   s12  s16  s20  s24  s28 |   Row 0
+| s1   s5   s9   s13  s17  s21  s25  s29 |   Row 1
+| s2   s6   s10  s14  s18  s22  s26  s30 |   Row 2
+| s3   s7   s11  s15  s19  s23  s27  s31 |   Row 3
+  -----/\----- EXCLUDED -----/\----- */
