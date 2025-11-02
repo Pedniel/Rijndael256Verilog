@@ -25,13 +25,15 @@ module rijndael256_top(
    reg [7:0]  state [0:31];
    reg [7:0]  state_next [0:31];
    reg [4:0]  round;
-   integer    i, j;
+   integer    i;
 
    wire [3839:0] expanded_keys_flat;
    wire [255:0] state_flat;
    wire [255:0] subbytes_out, shiftrows_out, mixcols_out, addroundkey_out;
    wire [255:0] current_roundkey;
 
+   wire [7:0] key_schedule [0:479];
+   
    key_expansion_dual keyexp_inst (
        .key_mode(key_mode), .key_in(key), .round_keys_flat(expanded_keys_flat)
    );
@@ -41,23 +43,31 @@ module rijndael256_top(
    mixcolumns256  mixcols_inst  (.state_in(state_flat), .state_out(mixcols_out));
    addroundkey256 addroundkey_inst(.state_in(state_flat), .roundkey(current_roundkey), .state_out(addroundkey_out));
 
-   
-   genvar k;
-   generate// State conversion
-      for (k = 0; k < 32; k = k + 1) begin : state_conv
-         assign state_flat[255 - k*8 -: 8] = state[k];
+   genvar j;
+   generate
+      for (j = 0; j < 32; j = j + 1) begin : state_conv
+         assign state_flat[255 - j*8 -: 8] = state[j];
+      end
+   endgenerate
+
+   generate
+      for (j = 0; j < 120; j = j + 1) begin : key_expand
+         assign key_schedule[j*4]     = expanded_keys_flat[32*j + 31 -: 8]; // MSB
+         assign key_schedule[j*4 + 1] = expanded_keys_flat[32*j + 23 -: 8];
+         assign key_schedule[j*4 + 2] = expanded_keys_flat[32*j + 15 -: 8];
+         assign key_schedule[j*4 + 3] = expanded_keys_flat[32*j +  7 -: 8]; // LSB
       end
    endgenerate
 
    // round key selection
    wire [4:0] effective_round = (state_fsm == INIT_ROUND) ? 5'd0 : round;
    generate
-      for (k = 0; k < 32; k = k + 1) begin : key_conv
-         assign current_roundkey[255 - k*8 -: 8] = 
-                expanded_keys_flat[effective_round * 256 + k*8 +: 8];
+      for (j = 0; j < 32; j = j + 1) begin : roundkey_conv
+         assign current_roundkey[255 - j*8 -: 8] = key_schedule[effective_round * 32 + j];
       end
    endgenerate
 
+   // output selection
    always @(*) begin
       case (state_fsm)
          INIT_ROUND:   for (i = 0; i < 32; i = i + 1) state_next[i] = addroundkey_out[255 - i*8 -: 8];
