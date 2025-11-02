@@ -1,31 +1,51 @@
 // Create diffusion by mixing bytes
+// For 32-byte (256-bit) block, state is 4x8 bytes (4 rows, 8 columns)
 module shiftrows (
-    input  [7:0] state_in[0:31],
-    output [7:0] state_out[0:31]
-);
+                  input [255:0]  state_in,
+                  output [255:0] state_out
+                  );
+   // Break input into byte array for easier indexing
+   wire [7:0]                    s [0:31];
+   reg [7:0]                     t [0:31];
+   integer                       i;
 
-    // Row 0: no shift
-    assign state_out[0] = state_in[0];   assign state_out[1] = state_in[1];
-    assign state_out[2] = state_in[2];   assign state_out[3] = state_in[3];
-    assign state_out[4] = state_in[4];   assign state_out[5] = state_in[5];
-    assign state_out[6] = state_in[6];   assign state_out[7] = state_in[7];
+   // Unpack 256-bit state into bytes
+   generate
+      genvar                     j;
+      for (j = 0; j < 32; j = j + 1)
+        assign s[j] = state_in[j*8 +: 8];
+   endgenerate
 
-    // Row 1: shift left by 1
-    assign state_out[8]  = state_in[9];  assign state_out[9]  = state_in[10];
-    assign state_out[10] = state_in[11]; assign state_out[11] = state_in[12];
-    assign state_out[12] = state_in[13]; assign state_out[13] = state_in[14];
-    assign state_out[14] = state_in[15]; assign state_out[15] = state_in[8];
+   always @(*) begin
+      // Row 0: no shift
+      t[0]  = s[0];   t[4]  = s[4];
+      t[8]  = s[8];   t[12] = s[12];
+      t[16] = s[16];  t[20] = s[20];
+      t[24] = s[24];  t[28] = s[28];
 
-    // Row 2: shift left by 3
-    assign state_out[16] = state_in[19]; assign state_out[17] = state_in[20];
-    assign state_out[18] = state_in[21]; assign state_out[19] = state_in[22];
-    assign state_out[20] = state_in[23]; assign state_out[21] = state_in[16];
-    assign state_out[22] = state_in[17]; assign state_out[23] = state_in[18];
+      // Row 1: shift left by 1
+      t[1]  = s[5];   t[5]  = s[9];
+      t[9]  = s[13];  t[13] = s[17];
+      t[17] = s[21];  t[21] = s[25];
+      t[25] = s[29];  t[29] = s[1];
 
-    // Row 3: shift left by 4
-    assign state_out[24] = state_in[28]; assign state_out[25] = state_in[29];
-    assign state_out[26] = state_in[30]; assign state_out[27] = state_in[31];
-    assign state_out[28] = state_in[24]; assign state_out[29] = state_in[25];
-    assign state_out[30] = state_in[26]; assign state_out[31] = state_in[27];
+      // Row 2: shift left by 3
+      t[2]  = s[14];  t[6]  = s[18];
+      t[10] = s[22];  t[14] = s[26];
+      t[18] = s[30];  t[22] = s[2];
+      t[26] = s[6];   t[30] = s[10];
 
+      // Row 3: shift left by 4
+      t[3]  = s[19];  t[7]  = s[23];
+      t[11] = s[27];  t[15] = s[31];
+      t[19] = s[3];   t[23] = s[7];
+      t[27] = s[11];  t[31] = s[15];
+   end
+
+   // Repack into 256-bit vector
+   generate
+      for (j = 0; j < 32; j = j + 1)
+        assign state_out[j*8 +: 8] = t[j];
+   endgenerate
 endmodule
+

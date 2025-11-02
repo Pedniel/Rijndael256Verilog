@@ -1,13 +1,24 @@
-module subbytes256_array (
-                          input  [7:0] state_in[0:31],
-                          output [7:0] state_out[0:31]
-                          );
-   genvar i;
+module subbytes256 (
+                    input wire [255:0]  state_in,
+                    output wire [255:0] state_out
+                    );
+
+   genvar                               i;
    generate
-      for (i = 0; i < 32; i = i + 1)
-        assign state_out[i] = sbox(state_in[i]);  // sbox is a function
+      for (i = 0; i < 32; i = i + 1) begin : sbox_loop
+         sbox_lookup sbox_inst (
+                                .byte_in(state_in[i*8 +: 8]),
+                                .byte_out(state_out[i*8 +: 8])
+                                );
+      end
    endgenerate
 
+endmodule
+
+module sbox_lookup (
+                    input wire [7:0]  byte_in,
+                    output wire [7:0] byte_out
+                    );
 
    // sbox lookup table (AES standard), taking from official NIST documentation
    function [7:0] sbox;
@@ -81,6 +92,8 @@ module subbytes256_array (
            default: sbox = 8'h00;
          endcase
       end
-   endfunction
+   endfunction // sbox
+   
+   assign byte_out = sbox(byte_in);
 
 endmodule

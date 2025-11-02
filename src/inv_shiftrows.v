@@ -1,33 +1,48 @@
 // Create diffusion by mixing bytes
 // Inverse is just a shifting in the opposite direction as before
-module inv_shiftrows (
-    input  [7:0] state_in[0:31],
-    output [7:0] state_out[0:31]
+module shiftrows256 (
+    input wire [255:0] state_in,
+    output wire [255:0] state_out
 );
-
-// Inverse ShiftRows
-   // No shift
-   assign state_out[0] = state_in[0];   assign state_out[1] = state_in[1];
-   assign state_out[2] = state_in[2];   assign state_out[3] = state_in[3];
-   assign state_out[4] = state_in[4];   assign state_out[5] = state_in[5];
-   assign state_out[6] = state_in[6];   assign state_out[7] = state_in[7];
-
-   // shift right by 1
-   assign state_out[8]  = state_in[15]; assign state_out[9]  = state_in[8];
-   assign state_out[10] = state_in[9];  assign state_out[11] = state_in[10];
-   assign state_out[12] = state_in[11]; assign state_out[13] = state_in[12];
-   assign state_out[14] = state_in[13]; assign state_out[15] = state_in[14];
-
-   // shift right by 3
-   assign state_out[16] = state_in[21]; assign state_out[17] = state_in[22];
-   assign state_out[18] = state_in[23]; assign state_out[19] = state_in[16];
-   assign state_out[20] = state_in[17]; assign state_out[21] = state_in[18];
-   assign state_out[22] = state_in[19]; assign state_out[23] = state_in[20];
-
-   // shift right by 4
-   assign state_out[24] = state_in[28]; assign state_out[25] = state_in[29];
-   assign state_out[26] = state_in[30]; assign state_out[27] = state_in[31];
-   assign state_out[28] = state_in[24]; assign state_out[29] = state_in[25];
-   assign state_out[30] = state_in[26]; assign state_out[31] = state_in[27];
-
+    // follow  same byte ordering as your main module
+    // state_in[255:248] = state[0], state_in[247:240] = state[1], etc.
+    
+   assign state_out[255 - 0*8 -: 8] = state_in[255 - 0*8 -: 8];   
+    assign state_out[255 - 4*8 -: 8] = state_in[255 - 4*8 -: 8];  
+    assign state_out[255 - 8*8 -: 8] = state_in[255 - 8*8 -: 8];  
+    assign state_out[255 - 12*8 -: 8] = state_in[255 - 12*8 -: 8];
+    assign state_out[255 - 16*8 -: 8] = state_in[255 - 16*8 -: 8];
+    assign state_out[255 - 20*8 -: 8] = state_in[255 - 20*8 -: 8];
+    assign state_out[255 - 24*8 -: 8] = state_in[255 - 24*8 -: 8];
+    assign state_out[255 - 28*8 -: 8] = state_in[255 - 28*8 -: 8];
+    
+// shift by 1
+    assign state_out[255 - 1*8 -: 8] = state_in[255 - 5*8 -: 8];   
+    assign state_out[255 - 5*8 -: 8] = state_in[255 - 9*8 -: 8];   
+    assign state_out[255 - 9*8 -: 8] = state_in[255 - 13*8 -: 8];  
+    assign state_out[255 - 13*8 -: 8] = state_in[255 - 17*8 -: 8]; 
+    assign state_out[255 - 17*8 -: 8] = state_in[255 - 21*8 -: 8]; 
+    assign state_out[255 - 21*8 -: 8] = state_in[255 - 25*8 -: 8]; 
+    assign state_out[255 - 25*8 -: 8] = state_in[255 - 29*8 -: 8]; 
+    assign state_out[255 - 29*8 -: 8] = state_in[255 - 1*8 -: 8];  
+    
+    // Row 2: Shift left by 3
+    assign state_out[255 - 2*8 -: 8] = state_in[255 - 14*8 -: 8];  
+    assign state_out[255 - 6*8 -: 8] = state_in[255 - 18*8 -: 8];  
+    assign state_out[255 - 10*8 -: 8] = state_in[255 - 22*8 -: 8]; 
+    assign state_out[255 - 14*8 -: 8] = state_in[255 - 26*8 -: 8]; 
+    assign state_out[255 - 18*8 -: 8] = state_in[255 - 30*8 -: 8]; 
+    assign state_out[255 - 22*8 -: 8] = state_in[255 - 2*8 -: 8];  
+    assign state_out[255 - 26*8 -: 8] = state_in[255 - 6*8 -: 8];  
+    assign state_out[255 - 30*8 -: 8] = state_in[255 - 10*8 -: 8]; 
+    
+    // Row 3: Shift left by 4
+    assign state_out[255 - 3*8 -: 8] = state_in[255 - 19*8 -: 8];  
+    assign state_out[255 - 7*8 -: 8] = state_in[255 - 23*8 -: 8];  
+    assign state_out[255 - 11*8 -: 8] = state_in[255 - 27*8 -: 8]; 
+    assign state_out[255 - 15*8 -: 8] = state_in[255 - 31*8 -: 8]; 
+    assign state_out[255 - 19*8 -: 8] = state_in[255 - 3*8 -: 8];  
+    assign state_out[255 - 23*8 -: 8] = state_in[255 - 7*8 -: 8];  
+    assign state_out[255 - 27*8 -: 8] = state_in[255 - 11*8 -: 8]; 
+    assign state_out[255 - 31*8 -: 8] = state_in[255 - 15*8 -: 8]; 
 endmodule
