@@ -1,18 +1,17 @@
 // Create diffusion by mixing bytes
 // Inverse is just a shifting in the opposite direction as before
 module inv_shiftrows256 (
-                  input [255:0]  state_in,
-                  output [255:0] state_out
-                  );
-   // Break input into byte array for easier indexing
-   wire [7:0]                    s [0:31];
-   reg [7:0]                     t [0:31];
-   integer                       i;
+    input [255:0]  state_in,
+    output [255:0] state_out
+);
+   wire [7:0] s [0:31];
+   reg [7:0]  t [0:31];
+   integer    i;
 
    generate
-      genvar                     j;
+      genvar j;
       for (j = 0; j < 32; j = j + 1)
-        assign s[j] = state_in[j*8 +: 8];
+        assign s[j] = state_in[255 - j*8 -: 8]; // Big endianess
    endgenerate
 
    always @(*) begin
@@ -40,14 +39,12 @@ module inv_shiftrows256 (
       t[19] = s[3];   t[23] = s[7];
       t[27] = s[11];  t[31] = s[15];
    end
-
-   // Repack into 256-bit vector
+   
    generate
       for (j = 0; j < 32; j = j + 1)
-        assign state_out[j*8 +: 8] = t[j];
+        assign state_out[255 - j*8 -: 8] = t[j]; 
    endgenerate
 endmodule
-
 /* -----\/----- EXCLUDED -----\/-----
 | s0   s4   s8   s12  s16  s20  s24  s28 |   Row 0
 | s1   s5   s9   s13  s17  s21  s25  s29 |   Row 1
