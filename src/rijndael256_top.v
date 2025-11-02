@@ -12,14 +12,17 @@ module rijndael256_top(
     output reg         done
 );
 
-   localparam Nrounds = 14;
-   localparam IDLE         = 3'd0;
-   localparam INIT_ROUND   = 3'd1;
-   localparam SUB_BYTES    = 3'd2;
-   localparam SHIFT_ROWS   = 3'd3;
-   localparam MIX_COLS     = 3'd4;
-   localparam ADD_ROUNDKEY = 3'd5;
-   localparam FINAL_ROUND  = 3'd6;
+   localparam Nrounds          = 14;
+   localparam IDLE             = 3'd0;
+   localparam INIT_ROUND       = 3'd1;
+   localparam SUB_BYTES        = 3'd2;
+   localparam INV_SUB_BYTES        = 3'd2;
+   localparam SHIFT_ROWS       = 3'd3;
+   localparam INV_SHIFT_ROWS   = 3'd3;
+   localparam MIX_COLS         = 3'd4;
+   localparam INV_MIX_COLS         = 3'd4;
+   localparam ADD_ROUNDKEY     = 3'd5;
+   localparam FINAL_ROUND      = 3'd6;
 
    reg [2:0]  state_fsm;
    reg [7:0]  state [0:31];
@@ -30,6 +33,7 @@ module rijndael256_top(
    wire [3839:0] expanded_keys_flat;
    wire [255:0] state_flat;
    wire [255:0] subbytes_out, shiftrows_out, mixcols_out, addroundkey_out;
+   wire [255:0] inv_subbytes_out, inv_shiftrows_out, inv_mixcols_out;
    wire [255:0] current_roundkey;
 
    wire [7:0] key_schedule [0:479];
@@ -42,6 +46,10 @@ module rijndael256_top(
    shiftrows256   shiftrows_inst(.state_in(state_flat), .state_out(shiftrows_out));
    mixcolumns256  mixcols_inst  (.state_in(state_flat), .state_out(mixcols_out));
    addroundkey256 addroundkey_inst(.state_in(state_flat), .roundkey(current_roundkey), .state_out(addroundkey_out));
+
+   inv_subbytes256    inv_subbytes_inst (.state_in(state_flat), .state_out(inv_subbytes_out));
+   inv_shiftrows256   inv_shiftrows_inst(.state_in(state_flat), .state_out(inv_shiftrows_out));
+   inv_mixcolumns256  inv_mixcols_inst  (.state_in(state_flat), .state_out(inv_mixcols_out));
 
    genvar j;
    generate
@@ -67,13 +75,25 @@ module rijndael256_top(
       end
    endgenerate
 
-   // output selection
+   // output selection for encryption
    always @(*) begin
       case (state_fsm)
          INIT_ROUND:   for (i = 0; i < 32; i = i + 1) state_next[i] = addroundkey_out[255 - i*8 -: 8];
          SUB_BYTES:    for (i = 0; i < 32; i = i + 1) state_next[i] = subbytes_out[255 - i*8 -: 8];
          SHIFT_ROWS:   for (i = 0; i < 32; i = i + 1) state_next[i] = shiftrows_out[255 - i*8 -: 8];
          MIX_COLS:     for (i = 0; i < 32; i = i + 1) state_next[i] = mixcols_out[255 - i*8 -: 8];
+         ADD_ROUNDKEY: for (i = 0; i < 32; i = i + 1) state_next[i] = addroundkey_out[255 - i*8 -: 8];
+         default:      for (i = 0; i < 32; i = i + 1) state_next[i] = state[i];
+      endcase
+   end
+
+   // output selection for decryption
+   always @(*) begin
+      case (state_fsm)
+         INIT_ROUND:   for (i = 0; i < 32; i = i + 1) state_next[i] = addroundkey_out[255 - i*8 -: 8];
+         INV_SUB_BYTES:    for (i = 0; i < 32; i = i + 1) state_next[i] = subbytes_out[255 - i*8 -: 8];
+         INV_SHIFT_ROWS:   for (i = 0; i < 32; i = i + 1) state_next[i] = inv_shiftrows_out[255 - i*8 -: 8];
+         INV_MIX_COLS:     for (i = 0; i < 32; i = i + 1) state_next[i] = mixcols_out[255 - i*8 -: 8];
          ADD_ROUNDKEY: for (i = 0; i < 32; i = i + 1) state_next[i] = addroundkey_out[255 - i*8 -: 8];
          default:      for (i = 0; i < 32; i = i + 1) state_next[i] = state[i];
       endcase

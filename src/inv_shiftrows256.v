@@ -1,6 +1,6 @@
 // Create diffusion by mixing bytes
 // Inverse is just a shifting in the opposite direction as before
-module shiftrows256 (
+module inv_shiftrows256 (
     input wire [255:0] state_in,
     output wire [255:0] state_out
 );

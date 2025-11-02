@@ -6,10 +6,7 @@ module subbytes256 (
    genvar                               i;
    generate
       for (i = 0; i < 32; i = i + 1) begin : sbox_loop
-         sbox_lookup sbox_inst (
-                                .byte_in(state_in[i*8 +: 8]),
-                                .byte_out(state_out[i*8 +: 8])
-                                );
+         sbox_lookup sbox_inst (.byte_in(state_in[i*8 +: 8]), .byte_out(state_out[i*8 +: 8]));
       end
    endgenerate
 

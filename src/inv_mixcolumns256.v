@@ -1,4 +1,4 @@
-module inv_mixcolumns256_array (
+module inv_mixcolumns256 (
     input  [255:0] state_in,
     output [255:0] state_out
 );

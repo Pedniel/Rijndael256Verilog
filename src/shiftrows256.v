@@ -1,6 +1,6 @@
 // Create diffusion by mixing bytes
 // For 32-byte (256-bit) block, state is 4x8 bytes (4 rows, 8 columns)
-module shiftrows (
+module shiftrows256 (
                   input [255:0]  state_in,
                   output [255:0] state_out
                   );

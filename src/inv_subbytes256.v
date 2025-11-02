@@ -1,13 +1,25 @@
-module inv_subbytes256_array (
-                              input [255:0]  state_in,
-                              output [255:0] state_out
-                              );
-   genvar                                    i;
+module inv_subbytes256 (
+                    input wire [255:0]  state_in,
+                    output wire [255:0] state_out
+                    );
+
+   genvar                               i;
    generate
-      for (i = 0; i < 32; i = i + 1) begin : inv_sbox_loop
-         assign state_out[i*8 +: 8] = inv_sbox(state_in[i*8 +: 8]);
+      for (i = 0; i < 32; i = i + 1) begin : sbox_loop
+         inv_sbox_lookup sbox_inst (
+
+                                    .byte_in(state_in[i*8 +: 8]),
+                                    .byte_out(state_out[i*8 +: 8])
+                                    );
       end
    endgenerate
+
+endmodule
+
+module inv_sbox_lookup (
+                    input wire [7:0]  byte_in,
+                    output wire [7:0] byte_out
+                    );
 
    // inverse sbox
    function [7:0] inv_sbox;
@@ -81,5 +93,8 @@ module inv_subbytes256_array (
            default: inv_sbox = 8'h00;
          endcase
       end
-   endfunction
+   endfunction // inv_sbox
+
+   assign byte_out = inv_sbox(byte_in);
+
 endmodule
