@@ -56,12 +56,10 @@ module inv_mixcolumns256 (
    genvar i;
    generate
       for (i = 0; i < 8; i = i + 1) begin : mixcol_loop
-         wire [7:0] s0, s1, s2, s3;
-
-         assign s0 = state_in[i*32 +: 8];
-         assign s1 = state_in[i*32 + 8 +: 8];
-         assign s2 = state_in[i*32 + 16 +: 8];
-         assign s3 = state_in[i*32 + 24 +: 8];
+         wire [7:0] s0 = state_in[255 - (i*4+0)*8 -: 8];
+         wire [7:0] s1 = state_in[255 - (i*4+1)*8 -: 8];
+         wire [7:0] s2 = state_in[255 - (i*4+2)*8 -: 8];
+         wire [7:0] s3 = state_in[255 - (i*4+3)*8 -: 8];
 
          assign state_out[255 - (i*4+0)*8 -: 8] = mul14(s0) ^ mul11(s1) ^ mul13(s2) ^ mul9(s3);
          assign state_out[255 - (i*4+1)*8 -: 8] = mul9(s0)  ^ mul14(s1) ^ mul11(s2) ^ mul13(s3);
