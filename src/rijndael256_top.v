@@ -30,11 +30,11 @@ module rijndael256_top(
    
    localparam FINAL_ROUND      = 4'd11;
 
-   localparam int BLOCK_BITS = 256;
-   localparam int BLOCK_MSB = BLOCK_BITS - 1;
-   localparam int BYTE_BITS  = 8;
-   localparam int NBYTES     = BLOCK_BITS / BYTE_BITS;
-   localparam int BYTES_PER_WORD = 4;
+   localparam BLOCK_BITS = 256;
+   localparam BLOCK_MSB = BLOCK_BITS - 1;
+   localparam BYTE_BITS  = 8;
+   localparam NBYTES     = BLOCK_BITS / BYTE_BITS;
+   localparam BYTES_PER_WORD = 4;
 
    reg [3:0]  state_fsm;
    reg [7:0]  state [0:31];
@@ -134,7 +134,7 @@ module rijndael256_top(
          done <= 1'b0;
          round <= 5'd0;
          data_out <= 256'd0;
-         for (i = 0; i < NBYTES; i = i + 1) state[i] <= BYTE_BITS'd0;
+         for (i = 0; i < NBYTES; i = i + 1) state[i] <= 8'd0;
       end else begin
          case (state_fsm)
            IDLE: begin
