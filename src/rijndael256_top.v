@@ -30,6 +30,12 @@ module rijndael256_top(
    
    localparam FINAL_ROUND      = 4'd11;
 
+   localparam int BLOCK_BITS = 256;
+   localparam int BLOCK_MSB = BLOCK_BITS - 1;
+   localparam int BYTE_BITS  = 8;
+   localparam int NBYTES     = BLOCK_BITS / BYTE_BITS;
+   localparam int BYTES_PER_WORD = 4;
+
    reg [3:0]  state_fsm;
    reg [7:0]  state [0:31];
    reg [7:0]  state_next [0:31];
@@ -60,18 +66,19 @@ module rijndael256_top(
    inv_mixcolumns256  inv_mixcols_inst  (.state_in(state_flat), .state_out(inv_mixcols_out));
 
    genvar j;
+   // flatten 32 element array into one 256 bit wire
    generate
-      for (j = 0; j < 32; j = j + 1) begin : state_conv
-         assign state_flat[255 - j*8 -: 8] = state[j];
+      for (j = 0; j < NBYTES; j = j + 1) begin : state_conv
+         assign state_flat[BLOCK_MSB - j*BYTE_BITS -: BYTE_BITS] = state[j];
       end
    endgenerate
 
    generate
       for (j = 0; j < 120; j = j + 1) begin : key_expand
-         assign key_schedule[j*4]     = expanded_keys_flat[32*j + 31 -: 8];
-         assign key_schedule[j*4 + 1] = expanded_keys_flat[32*j + 23 -: 8];
-         assign key_schedule[j*4 + 2] = expanded_keys_flat[32*j + 15 -: 8];
-         assign key_schedule[j*4 + 3] = expanded_keys_flat[32*j +  7 -: 8];
+         assign key_schedule[j*BYTES_PER_WORD]     = expanded_keys_flat[NBYTES*j + 31 -: BYTE_BITS];
+         assign key_schedule[j*BYTES_PER_WORD + 1] = expanded_keys_flat[NBYTES*j + 23 -: BYTE_BITS];
+         assign key_schedule[j*BYTES_PER_WORD + 2] = expanded_keys_flat[NBYTES*j + 15 -: BYTE_BITS];
+         assign key_schedule[j*BYTES_PER_WORD + 3] = expanded_keys_flat[NBYTES*j +  7 -: BYTE_BITS];
       end
    endgenerate
 
@@ -86,36 +93,36 @@ module rijndael256_top(
                            round;
 
    generate
-      for (j = 0; j < 32; j = j + 1) begin : roundkey_conv
-         assign current_roundkey[255 - j*8 -: 8] = key_schedule[effective_round * 32 + j];
+      for (j = 0; j < NBYTES; j = j + 1) begin : roundkey_conv
+         assign current_roundkey[BLOCK_MSB - j*BYTE_BITS -: BYTE_BITS] = key_schedule[effective_round * NBYTES + j];
       end
    endgenerate
 
    always @(*) begin
       case (state_fsm)
          ENC_INIT_ROUND, DEC_INIT_ROUND: 
-            for (i = 0; i < 32; i = i + 1) state_next[i] = addroundkey_out[255 - i*8 -: 8];
+            for (i = 0; i < NBYTES; i = i + 1) state_next[i] = addroundkey_out[BLOCK_MSB - i*BYTE_BITS -: BYTE_BITS];
             
          ENC_SUB_BYTES: 
-            for (i = 0; i < 32; i = i + 1) state_next[i] = subbytes_out[255 - i*8 -: 8];
+            for (i = 0; i < NBYTES; i = i + 1) state_next[i] = subbytes_out[BLOCK_MSB - i*BYTE_BITS -: BYTE_BITS];
          ENC_SHIFT_ROWS: 
-            for (i = 0; i < 32; i = i + 1) state_next[i] = shiftrows_out[255 - i*8 -: 8];
+            for (i = 0; i < NBYTES; i = i + 1) state_next[i] = shiftrows_out[BLOCK_MSB - i*BYTE_BITS -: BYTE_BITS];
          ENC_MIX_COLS: 
-            for (i = 0; i < 32; i = i + 1) state_next[i] = mixcols_out[255 - i*8 -: 8];
+            for (i = 0; i < NBYTES; i = i + 1) state_next[i] = mixcols_out[BLOCK_MSB - i*BYTE_BITS -: BYTE_BITS];
          ENC_ADD_ROUNDKEY: 
-            for (i = 0; i < 32; i = i + 1) state_next[i] = addroundkey_out[255 - i*8 -: 8];
+            for (i = 0; i < NBYTES; i = i + 1) state_next[i] = addroundkey_out[BLOCK_MSB - i*BYTE_BITS -: BYTE_BITS];
             
          DEC_INV_SHIFT_ROWS: 
-            for (i = 0; i < 32; i = i + 1) state_next[i] = inv_shiftrows_out[255 - i*8 -: 8];
+            for (i = 0; i < NBYTES; i = i + 1) state_next[i] = inv_shiftrows_out[BLOCK_MSB - i*BYTE_BITS -: BYTE_BITS];
          DEC_INV_SUB_BYTES: 
-            for (i = 0; i < 32; i = i + 1) state_next[i] = inv_subbytes_out[255 - i*8 -: 8];
+            for (i = 0; i < NBYTES; i = i + 1) state_next[i] = inv_subbytes_out[BLOCK_MSB - i*BYTE_BITS -: BYTE_BITS];
          DEC_ADD_ROUNDKEY: 
-            for (i = 0; i < 32; i = i + 1) state_next[i] = addroundkey_out[255 - i*8 -: 8];
+            for (i = 0; i < NBYTES; i = i + 1) state_next[i] = addroundkey_out[BLOCK_MSB - i*BYTE_BITS -: BYTE_BITS];
          DEC_INV_MIX_COLS: 
-            for (i = 0; i < 32; i = i + 1) state_next[i] = inv_mixcols_out[255 - i*8 -: 8];
+            for (i = 0; i < NBYTES; i = i + 1) state_next[i] = inv_mixcols_out[BLOCK_MSB - i*BYTE_BITS -: BYTE_BITS];
             
          default: 
-            for (i = 0; i < 32; i = i + 1) state_next[i] = state[i];
+            for (i = 0; i < NBYTES; i = i + 1) state_next[i] = state[i];
       endcase
    end
 
@@ -127,47 +134,47 @@ module rijndael256_top(
          done <= 1'b0;
          round <= 5'd0;
          data_out <= 256'd0;
-         for (i = 0; i < 32; i = i + 1) state[i] <= 8'd0;
+         for (i = 0; i < NBYTES; i = i + 1) state[i] <= BYTE_BITS'd0;
       end else begin
          case (state_fsm)
            IDLE: begin
               done <= 1'b0;
               if (start) begin
                  busy <= 1'b1;
-                 for (i = 0; i < 32; i = i + 1) state[i] <= data_in[255 - i*8 -: 8];
+                 for (i = 0; i < NBYTES; i = i + 1) state[i] <= data_in[BLOCK_MSB - i*BYTE_BITS -: BYTE_BITS];
                  round <= 5'd0;
                  
                  if (enc_dec) 
-                    state_fsm <= DEC_INIT_ROUND;  // Start decryption
+                    state_fsm <= DEC_INIT_ROUND;
                  else 
-                    state_fsm <= ENC_INIT_ROUND;  // Start encryption
+                    state_fsm <= ENC_INIT_ROUND;
               end
            end
 
            // ENCRYPTION
            ENC_INIT_ROUND: begin
-              for (i = 0; i < 32; i = i + 1) state[i] <= state_next[i];
+              for (i = 0; i < NBYTES; i = i + 1) state[i] <= state_next[i];
               round <= 5'd1;
               state_fsm <= ENC_SUB_BYTES;
            end
 
            ENC_SUB_BYTES: begin
-              for (i = 0; i < 32; i = i + 1) state[i] <= state_next[i];
+              for (i = 0; i < NBYTES; i = i + 1) state[i] <= state_next[i];
               state_fsm <= ENC_SHIFT_ROWS;
            end
 
            ENC_SHIFT_ROWS: begin
-              for (i = 0; i < 32; i = i + 1) state[i] <= state_next[i];
+              for (i = 0; i < NBYTES; i = i + 1) state[i] <= state_next[i];
               state_fsm <= (round == Nrounds) ? ENC_ADD_ROUNDKEY : ENC_MIX_COLS;
            end
 
            ENC_MIX_COLS: begin
-              for (i = 0; i < 32; i = i + 1) state[i] <= state_next[i];
+              for (i = 0; i < NBYTES; i = i + 1) state[i] <= state_next[i];
               state_fsm <= ENC_ADD_ROUNDKEY;
            end
 
            ENC_ADD_ROUNDKEY: begin
-              for (i = 0; i < 32; i = i + 1) state[i] <= state_next[i];
+              for (i = 0; i < NBYTES; i = i + 1) state[i] <= state_next[i];
               if (round == Nrounds)
                  state_fsm <= FINAL_ROUND;
               else begin
@@ -178,23 +185,23 @@ module rijndael256_top(
 
            // DECRYPTION
            DEC_INIT_ROUND: begin
-              for (i = 0; i < 32; i = i + 1) state[i] <= state_next[i];
+              for (i = 0; i < NBYTES; i = i + 1) state[i] <= state_next[i];
               round <= 5'd1;
               state_fsm <= DEC_INV_SHIFT_ROWS;
            end
 
            DEC_INV_SHIFT_ROWS: begin
-              for (i = 0; i < 32; i = i + 1) state[i] <= state_next[i];
+              for (i = 0; i < NBYTES; i = i + 1) state[i] <= state_next[i];
               state_fsm <= DEC_INV_SUB_BYTES;
            end
 
            DEC_INV_SUB_BYTES: begin
-              for (i = 0; i < 32; i = i + 1) state[i] <= state_next[i];
+              for (i = 0; i < NBYTES; i = i + 1) state[i] <= state_next[i];
               state_fsm <= DEC_ADD_ROUNDKEY;
            end
 
            DEC_ADD_ROUNDKEY: begin
-              for (i = 0; i < 32; i = i + 1) state[i] <= state_next[i];
+              for (i = 0; i < NBYTES; i = i + 1) state[i] <= state_next[i];
               if (round == Nrounds)
                  state_fsm <= FINAL_ROUND;
               else begin
@@ -203,13 +210,13 @@ module rijndael256_top(
            end
 
            DEC_INV_MIX_COLS: begin
-              for (i = 0; i < 32; i = i + 1) state[i] <= state_next[i];
+              for (i = 0; i < NBYTES; i = i + 1) state[i] <= state_next[i];
               round <= round + 5'd1;
               state_fsm <= DEC_INV_SHIFT_ROWS;
            end
 
            FINAL_ROUND: begin
-              for (i = 0; i < 32; i = i + 1) data_out[255 - i*8 -: 8] <= state[i];
+              for (i = 0; i < NBYTES; i = i + 1) data_out[BLOCK_MSB - i*BYTE_BITS -: BYTE_BITS] <= state[i];
               done <= 1'b1;
               busy <= 1'b0;
               state_fsm <= IDLE;
