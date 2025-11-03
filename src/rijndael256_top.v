@@ -82,7 +82,7 @@ module rijndael256_top(
       end
    endgenerate
 
-   // round key selection for both encryption and decryption
+   // differentiate between enc/dec and inital vs later rounds
    wire [4:0] effective_round;
    assign effective_round = (state_fsm == ENC_INIT_ROUND) ? 5'd0 :
                            (state_fsm == DEC_INIT_ROUND) ? Nrounds :
