@@ -1,12 +1,15 @@
 # Rijndael256Verilog
 
-Simple 32 byte block size Rjindael implementation in verilog.
+Simple 32 byte block size Rijndael implementation in verilog.
 
 Decryption and encryption for both ECB and CTR mode.
 
 For CTR mode, use rijndael256_ctr.v as top-level file.
+
 For ECB mode, use rijndael256_top.v.
+
 192/256 bit key mode, controlled by key_mode input (0 for 192, 1 for 256).
+
 32 Byte Block size.
 
 Will implement a cleaner CTR/ECB mode switch.
