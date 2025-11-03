@@ -19,6 +19,8 @@ Includes testbench with different modules for testing encryption/decryption/ecb 
 
 WORK IN PROGRESS
 
+But currently functional for ecb/ctr mode and encryption/decryption for both.
+
 To verify simulation results, compare with py3rijndael library: 
 
 # Rijndael 256-bit Block Test Vector Generator
