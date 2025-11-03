@@ -2,7 +2,7 @@
 
 Simple 32 byte block size Rjindael implementation in verilog.
 
-Decryption and encryption for both ECB and CTRL mode.
+Decryption and encryption for both ECB and CTR mode.
 
 For CTR mode, use rijndael256_ctr.v as top-level file.
 For ECB mode, use rijndael256_top.v.
