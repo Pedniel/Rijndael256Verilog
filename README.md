@@ -1,6 +1,6 @@
 # Rijndael256Verilog
 
-Simple 32 bit block size Rjindael implementation in verilog.
+Simple 32 byte block size Rjindael implementation in verilog.
 
 Decryption and encryption for both ECB and CTRL mode.
 
